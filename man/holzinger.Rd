@@ -1,0 +1,14 @@
+\docType{data}
+\name{holzinger}
+\alias{holzinger}
+\title{Description of holzinger data}
+\description{
+  A sample of 100 simulated cases from the infamous
+  Holzinger dataset using 9 variables.
+}
+\author{
+  Phil Chalmers \email{rphilip.chalmers@gmail.com}
+}
+\keyword{data}
+\keyword{datasets}
+
