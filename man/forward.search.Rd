@@ -18,18 +18,18 @@
   \item{data}{matrix or data.frame}
 
   \item{model}{if a single numeric number declares number
-  of factors to extract in exploratory factor ansysis. If
+  of factors to extract in exploratory factor analysis. If
   \code{class(model)} is a sem (or OpenMx model if
   installed from github) then a confirmatory approach is
   performed instead}
 
   \item{criteria}{character strings indicating the forward
-  search method Can contain \code{'LD'} for log-liklihood
+  search method Can contain \code{'LD'} for log-likelihood
   distance, \code{'mah'} for Mahalanobis distance, or
   \code{'res'} for model implied residuals}
 
   \item{n.subsets}{a scalar indicating how many samples to
-  draw to find a homogenous starting base group}
+  draw to find a homogeneous starting base group}
 
   \item{p.base}{proportion of sample size to use as the
   base group}
@@ -46,7 +46,7 @@
 
   \item{stat}{type of statistic to use. Could be 'LR',
   'RMR', or 'gCD' for the likelihood ratio, root mean
-  square residual, or generalized Cook's disntance,
+  square residual, or generalized Cook's distances,
   respectively}
 
   \item{...}{additional parameters to be passed}
@@ -55,7 +55,7 @@
 
   \item{main}{the main title of the plot}
 
-  \item{type}{type of plot to use, default displayes points
+  \item{type}{type of plot to use, default displays points
   and lines}
 
   \item{ylab}{the y label of the plot}
@@ -66,7 +66,7 @@
   criteria and continues to add individual cases at each
   iteration given an acceptance criteria. By default the
   function add cases that contribute most to the likelihood
-  function and that have the closest robust mahalanobis
+  function and that have the closest robust Mahalanobis
   distance, however model implied residuals may be included
   as well.
 }
@@ -74,10 +74,7 @@
   Note that \code{forward.search} is not limited to
   confirmatory factor analysis and can apply to nearly any
   model being studied where detection of influential
-  observations is important. If using the \code{sem}
-  package \code{forward.search} can be \emph{very} slow,
-  and it's recommended that the user use \code{OpenMx}
-  instead (see \code{?faoutlier} for details).
+  observations is important.
 }
 \examples{
 \dontrun{

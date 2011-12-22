@@ -11,13 +11,13 @@
 
   \method{summary}{robmah} (object, gt = 0, ...)
 
-  \method{plot}{robmah} (x, y = NULL, ...)
+  \method{plot}{robmah} (x, y = NULL, type = "xyplot", ...)
 }
 \arguments{
   \item{data}{matrix or data.frame}
 
   \item{method}{type of estimation for robust means and
-  covariance (see \code{\link{cov.rob}}}
+  covariance (see \code{\link{cov.rob}})}
 
   \item{na.rm}{logical; remove cases with missing data?}
 
@@ -34,9 +34,12 @@
   \code{gt}}
 
   \item{y}{empty parameter passed to \code{plot}}
+
+  \item{type}{type of plot to display, can be either
+  \code{'qqplot'} or \code{'xyplot'}}
 }
 \description{
-  Compute Mahalanobis distances using the robust computing
+  Obtain Mahalanobis distances using the robust computing
   methods found in the \code{MASS} package.
 }
 \examples{
@@ -45,6 +48,8 @@ data(holzinger)
 output <- robustMD(holzinger)
 output
 summary(output)
+plot(output)
+plot(output, type = 'qqplot')
 }
 }
 \author{

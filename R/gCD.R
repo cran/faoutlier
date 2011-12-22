@@ -12,7 +12,7 @@
 #' @aliases gCD
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor ansysis. If \code{class(model)} is a sem (or OpenMx model if installed 
+#' exploratory factor analysis. If \code{class(model)} is a sem (or OpenMx model if installed 
 #' from github) then a confirmatory approach is performed instead
 #' @param na.rm logical; remove cases with missing data?
 #' @param digits number of digits to round in the final result
@@ -157,8 +157,7 @@ print.gCD <- function(x, head = .05, DFBETAS = FALSE, ...)
 		attr(ret,'dfbetas') <- x$dfbetas[ret[ ,1], ]
 		rownames(attr(ret,'dfbetas')) <- ret[ ,1]	
 	}
-	print(ret)
-	invisible(ret)
+	return(print(ret))	
 }
 
 #' @S3method plot gCD
@@ -166,7 +165,7 @@ print.gCD <- function(x, head = .05, DFBETAS = FALSE, ...)
 #' @method plot gCD
 #' @param y a \code{NULL} value ignored by the plotting function
 #' @param main the main title of the plot
-#' @param type type of plot to use, default displayes points and lines
+#' @param type type of plot to use, default displays points and lines
 #' @param ylab the y label of the plot
 plot.gCD <- function(x, y = NULL, main = 'Generalized Cook Distance', 
 	type = c('p','h'), ylab = 'gCD', ...)

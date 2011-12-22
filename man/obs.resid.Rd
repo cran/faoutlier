@@ -6,17 +6,17 @@
 \usage{
   obs.resid(data, model, na.rm = TRUE, digits = 5)
 
-  \method{print}{obs.resid} (x, ...)
+  \method{print}{obs.resid} (x, restype = "obs", ...)
 
   \method{plot}{obs.resid} (x, y = NULL,
     main = "Observed Residuals", type = c("p", "h"),
-    ylab = "obs.resid", ...)
+    restype = "obs", ...)
 }
 \arguments{
   \item{data}{matrix or data.frame}
 
   \item{model}{if a single numeric number declares number
-  of factors to extract in exploratory factor ansysis. If
+  of factors to extract in exploratory factor analysis. If
   \code{class(model)} is a sem (or OpenMx model if
   installed from github) then a confirmatory approach is
   performed instead}
@@ -28,6 +28,11 @@
 
   \item{x}{an object of class \code{obs.resid}}
 
+  \item{restype}{type of residual used, either \code{'obs'}
+  for observation value (inner product), \code{'res'} or
+  \code{'std_res'} for unstandardized and standardized for
+  each variable, respectively}
+
   \item{...}{additional parameters to be passed}
 
   \item{y}{a \code{NULL} value ignored by the plotting
@@ -35,9 +40,7 @@
 
   \item{main}{the main title of the plot}
 
-  \item{ylab}{the y label of the plot}
-
-  \item{type}{type of plot to use, default displayes points
+  \item{type}{type of plot to use, default displays points
   and lines}
 }
 \description{

@@ -4,26 +4,24 @@
 #' of cases based on a maximum likelihood criteria and continues to add individual 
 #' cases at each iteration given an acceptance criteria. By default the function
 #' add cases that contribute most to the likelihood function and that have 
-#' the closest robust mahalanobis distance, however model implied residuals 
+#' the closest robust Mahalanobis distance, however model implied residuals 
 #' may be included as well.
 #'
 #' Note that \code{forward.search} is not limited to confirmatory factor analysis and 
 #' can apply to nearly any model being studied
-#' where detection of influential observations is important. If using the \code{sem} package
-#' \code{forward.search} can be \emph{very} slow, and it's recommended that the user use 
-#' \code{OpenMx} instead (see \code{?faoutlier} for details).
+#' where detection of influential observations is important. 
 #' 
 #' 
 #' @aliases forward.search
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor ansysis. If \code{class(model)} is a sem (or OpenMx model if installed 
+#' exploratory factor analysis. If \code{class(model)} is a sem (or OpenMx model if installed 
 #' from github) then a confirmatory approach is performed instead
 #' @param criteria character strings indicating the forward search method
-#' Can contain \code{'LD'} for log-liklihood distance, \code{'mah'} for Mahalanobis
+#' Can contain \code{'LD'} for log-likelihood distance, \code{'mah'} for Mahalanobis
 #' distance, or \code{'res'} for model implied residuals 
 #' @param n.subsets a scalar indicating how many samples to draw to find 
-#' a homogenous
+#' a homogeneous
 #' starting base group
 #' @param p.base proportion of sample size to use as the base group
 #' @param na.rm logical; remove cases with missing data?
@@ -338,7 +336,7 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 #' @method print forward.search
 #' @param x an object of class \code{forward.search}
 #' @param stat type of statistic to use. Could be 'LR', 'RMR', or 'gCD' for 
-#' the likelihood ratio, root mean square residual, or generalized Cook's disntance,  
+#' the likelihood ratio, root mean square residual, or generalized Cook's distances,  
 #' respectively
 #' @param ... additional parameters to be passed
 print.forward.search <- function(x, stat = 'LR', ...)
@@ -347,7 +345,7 @@ print.forward.search <- function(x, stat = 'LR', ...)
 	if(stat == 'RMR') ret <- x$RMR
 	if(stat == 'gCD') ret <- x$gCD
 	names(ret) <- x$ord
-	print(ret)
+	return(print(ret))
 }
 
 #' @S3method plot forward.search
@@ -355,7 +353,7 @@ print.forward.search <- function(x, stat = 'LR', ...)
 #' @method plot forward.search
 #' @param y a \code{null} value ignored by \code{plot}
 #' @param main the main title of the plot
-#' @param type type of plot to use, default displayes points and lines
+#' @param type type of plot to use, default displays points and lines
 #' @param ylab the y label of the plot
 plot.forward.search <- function(x, y = NULL, stat = 'LR', main = 'Forward Search', 
 	type = c('p','h'), ylab = 'obs.resid', ...)

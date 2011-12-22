@@ -7,7 +7,7 @@
 #' @aliases obs.resid
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor ansysis. If \code{class(model)} is a sem (or OpenMx model if installed 
+#' exploratory factor analysis. If \code{class(model)} is a sem (or OpenMx model if installed 
 #' from github) then a confirmatory approach is performed instead
 #' @param na.rm logical; remove cases with missing data?
 #' @param digits number of digits to round in the final result
@@ -80,14 +80,13 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5)
 	if(is.numeric(model)){		
 		R <- cor(data)
 		mod <- factanal(data, model, rotation='none', scores = 'regression')
-		scores <- mod$scores
+		scores <- mod$scores		
 		ret$fascores <- scores
 		Lambda <- unclass(mod$loadings)
 		Theta <- diag(mod$uniquenesses)	
-		e <- data - scores %*% t(Lambda)
-		VAR <- diag(mod$uniqueness) %*% solve(R) %*% 
-			diag(mod$uniqueness) 
-		eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(e)) 
+		e <- data - scores %*% t(Lambda)		
+		VAR <- Theta %*% solve(R) %*% Theta 
+		eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(scale(e, scale = FALSE))) 
 		colnames(eji) <- colnames(e) <- colnames(data)		
 		ret$res <- e
 		ret$std_res <- eji
@@ -101,9 +100,9 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5)
         lnames <- setdiff(colnames(mod$P), vnames)
         Lambda <- mod$A[1:length(vnames), (length(vnames)+1):ncol(mod$A)]
         Theta <- mod$P[1:length(vnames),1:length(vnames)]
-        e <- data - scores %*% t(Lambda)
+        e <- data - scores %*% t(Lambda)		
         VAR <- Theta %*% solve(C) %*% Theta
-        eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(e))
+        eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(scale(e, scale = FALSE)))
         colnames(eji) <- colnames(e) <- colnames(data)
         ret$res <- e
         ret$std_res <- eji        
@@ -121,9 +120,9 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5)
 	##OPENMX## 	U <- mat[[2]][1:n, 1:n]
 	##OPENMX## 	scores <- t(Phi %*% t(L) %*% solve(sigHat) %*% 
 	##OPENMX## 		t(data - colMeans(data)))
-	##OPENMX## 	e <- data - scores %*% t(L)
+	##OPENMX## 	e <- data - scores %*% t(L)	
 	##OPENMX## 	VAR <- U %*% solve(cov(data)) %*%  U
-	##OPENMX## 	eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(e)) 
+	##OPENMX## 	eji <- t(solve(diag(sqrt(diag(VAR)))) %*% t(scale(e, scale = FALSE)) 
 	##OPENMX## 	colnames(eji) <- colnames(e) <- colnames(data)		
 	##OPENMX## 	ret$res <- e
 	##OPENMX## 	ret$std_res <- eji	
@@ -137,15 +136,18 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5)
 #' @rdname obs.resid
 #' @method print obs.resid
 #' @param x an object of class \code{obs.resid}
+#' @param restype type of residual used, either \code{'obs'} for observation value  
+#' (inner product), \code{'res'} or \code{'std_res'} for unstandardized and standardized 
+#' for each variable, respectively  
 #' @param ... additional parameters to be passed 
-print.obs.resid <- function(x, ...)
+print.obs.resid <- function(x, restype = 'obs', ...)
 {
-	stat <- c()
+    if(restype == 'res') return(print(x$res))
+    if(restype == 'std_res') return(print(x$std_res))
+	stat <- c()    
 	for(i in 1:length(x$id))
-		stat[i] <- x$std_res[i, ] %*% x$std_res[i, ]	
-	ret <- list(ee = stat)
-	print(ret)
-	invisible(ret)
+		stat[i] <- x$std_res[i, ] %*% x$std_res[i, ]
+    if(restype == 'obs') return(print(stat))
 }
 
 #' @S3method plot obs.resid
@@ -153,17 +155,29 @@ print.obs.resid <- function(x, ...)
 #' @method plot obs.resid
 #' @param y a \code{NULL} value ignored by the plotting function
 #' @param main the main title of the plot
-#' @param ylab the y label of the plot
-#' @param type type of plot to use, default displayes points and lines
+#' @param type type of plot to use, default displays points and lines
 plot.obs.resid <- function(x, y = NULL, main = 'Observed Residuals', 
-	type = c('p','h'), ylab = 'obs.resid', ...)
+	type = c('p','h'), restype = 'obs', ...)
 {
+	ylab <- switch(restype,
+		obs = 'Observed residuals',
+		res = 'Observed variable residuals',
+		std_res = 'Standardized variable residuals')
 	ID <- as.numeric(x$id)
 	stat <- c()
 	for(i in 1:length(x$id))
-		stat[i] <- x$std_res[i, ] %*% x$std_res[i, ]
-	dat <- data.frame(stat,ID)	
-	ret <- xyplot(stat~ID, dat, type = type, main = main, ylab = ylab, ...)
+		stat[i] <- x$std_res[i, ] %*% x$std_res[i, ]	
+	if(restype == 'obs'){
+		dat <- data.frame(stat=stat,ID=ID)
+		ret <- xyplot(stat~ID, dat, type = type, main = main, ylab = ylab, ...)
+	}
+	if(restype == 'res' || restype == 'std_res'){
+		if(restype == 'res') dat <- data.frame(ID=ID,x$res)
+			else dat <- data.frame(ID=ID,x$std_res)
+		rownames(dat) <- ID
+		dat2 <- reshape(dat, v.names='res', direction = 'long', varying=2:ncol(dat), timevar='variable', sep='')	
+		ret <- xyplot(res~ID|as.factor(variable), dat2, type = type, main = main, ylab = ylab, ...)		
+	}
 	return(ret)
 }
 
