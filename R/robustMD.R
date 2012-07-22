@@ -8,11 +8,14 @@
 #' @param data matrix or data.frame 
 #' @param method type of estimation for robust means and covariance
 #' (see \code{\link{cov.rob}})
-#' @param na.rm logical; remove cases with missing data?
+#' @param na.rm logical; remove rows with missing data?
 #' @param digits number of digits to round in the final result
 #' @author Phil Chalmers \email{rphilip.chalmers@@gmail.com}
 #' @seealso
 #' \code{\link{gCD}}, \code{\link{obs.resid}}, \code{\link{LD}}
+#' @references
+#' Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data screening and assumption testing for 
+#' exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3}, 1-21.
 #' @keywords covariance
 #' @export robustMD
 #' @examples 
@@ -81,22 +84,25 @@ summary.robmah <- function(object, gt = 0, ...)
 #' @S3method plot robmah
 #' @param y empty parameter passed to \code{plot}
 #' @param type type of plot to display, can be either \code{'qqplot'} or \code{'xyplot'}
+#' @param main title for plot. If missing titles will be generated automatically
 #' @rdname robustMD
 #' @method plot robmah 
-plot.robmah <- function(x, y = NULL, type = 'xyplot', ...){
+plot.robmah <- function(x, y = NULL, type = 'xyplot', main, ...){    
 	mah <- x$mah
 	N <- length(mah)
 	J <- x$J
+    if(missing(main)) 
+        main <- ifelse(type == 'qqplot', 'QQ plot', 'Robust MD') 
     if(type == 'qqplot'){
         dat <- data.frame(theoryQQ = qchisq(ppoints(N),df=J), mah=mah)
-        qqmath(~mah, data=dat, prepanel = prepanel.qqmathline, main = 'QQ plot',
+        lattice::qqmath(~mah, data=dat, prepanel = prepanel.qqmathline, main = main,
                panel = function(x, ...) {
                    panel.qqmathline(x, ...)
                    panel.qqmath(x, ...)
-               })   	
+               }, ...)   	
     }
     if(type == 'xyplot'){
         dat <- data.frame(mah=mah, ID=x$ID)
-        xyplot(mah~ID, dat, main="Robust MD", type = c('p', 'h'), ...)
+        lattice::xyplot(mah~ID, dat, main = main, type = c('p', 'h'), ...)
     }	
 }

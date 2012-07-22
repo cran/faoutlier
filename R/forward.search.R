@@ -18,13 +18,13 @@
 #' exploratory factor analysis. If \code{class(model)} is a sem (or OpenMx model if installed 
 #' from github) then a confirmatory approach is performed instead
 #' @param criteria character strings indicating the forward search method
-#' Can contain \code{'LD'} for log-likelihood distance, \code{'mah'} for Mahalanobis
+#' Can contain \code{'LD'} for likelihood distance, \code{'mah'} for Mahalanobis
 #' distance, or \code{'res'} for model implied residuals 
 #' @param n.subsets a scalar indicating how many samples to draw to find 
-#' a homogeneous
-#' starting base group
+#' a homogeneous starting base group
 #' @param p.base proportion of sample size to use as the base group
-#' @param na.rm logical; remove cases with missing data?
+#' @param na.rm logical; remove rows with missing data? Note that this is required for 
+#' EFA analysis and \code{sem} fitted models
 #' @param digits number of digits to round in the final result
 #' @param print.messages logical; print how many iterations are remaining?
 #' @author Phil Chalmers \email{rphilip.chalmers@@gmail.com}
@@ -149,9 +149,9 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 		basemodels[[LOOP+1]] <- mlfact(cor(data), model)	
 		basemodels[[LOOP+1]]$N <- nrow(data)
 		basemodels[[LOOP+1]]$R <- cor(data)
-		LRstat <- RMR <- Cooksstat <- c()		
+		LDstat <- RMR <- Cooksstat <- c()		
 		for(i in 1:(length(basemodels)-1)){
-			LRstat[i] <- basemodels[[i]]$value * (length(orgbaseID) + i - 1)
+			LDstat[i] <- basemodels[[i]]$value * (length(orgbaseID) + i - 1)
 			theta <- basemodels[[i]]$par	
 			hess <- basemodels[[i]]$hessian
 			theta2 <- basemodels[[i+1]]$par	
@@ -163,12 +163,12 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 		}
 		Cooksstat <- c(NA, Cooksstat)
 		orderentered <- c(NA, orderentered)
-		LRstat[i+1] <- basemodels[[i+1]]$value * N
+		LDstat[i+1] <- basemodels[[i+1]]$value * N
 		Rhat <- basemodels[[i+1]]$loadings %*% t(basemodels[[i+1]]$loadings)
 		diag(Rhat) <- 1
 		RMR[i+1] <- sqrt(2*sum(((basemodels[[i+1]]$R - Rhat)^2) / 
 			(ncol(Rhat)*(ncol(Rhat) + 1))))
-		ret <- list(LR=LRstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)		
+		ret <- list(LD=LDstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)		
 	}
 	if(class(model) == "semmod"){        
 	    STATISTICS <- rep(NA, n.subsets)
@@ -223,9 +223,9 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	    }	
 	    tmpcov <- cov(data)	    
 	    basemodels[[LOOP+1]] <- sem(model, tmpcov, N)
-	    LRstat <- RMR <- Cooksstat <- c()		
+	    LDstat <- RMR <- Cooksstat <- c()		
 	    for(i in 1:(length(basemodels)-1)){
-	    	LRstat[i] <- basemodels[[i]]$criterion * (basemodels[[i]]$N - 1)			
+	    	LDstat[i] <- basemodels[[i]]$criterion * (basemodels[[i]]$N - 1)			
 	    	theta <- basemodels[[i]]$coeff	
 	    	vcov <- basemodels[[i]]$vcov
 	    	theta2 <- basemodels[[i+1]]$coeff
@@ -237,11 +237,11 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	    }		
 	    Cooksstat <- c(NA, Cooksstat)
 	    orderentered <- c(NA, orderentered)
-	    LRstat[i+1] <- basemodels[[i+1]]$criterion * (basemodels[[i+1]]$N - 1)
+	    LDstat[i+1] <- basemodels[[i+1]]$criterion * (basemodels[[i+1]]$N - 1)
 	    Chat <- basemodels[[i+1]]$C
 	    C <- basemodels[[i+1]]$S
 	    RMR[i+1] <- sqrt(2*sum(((C - Chat)^2) /	(ncol(C)*(ncol(C) + 1))))	
-	    ret <- list(LR=LRstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)	    
+	    ret <- list(LD=LDstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)	    
 	}
 	##OPENMX## if(class(model) == "MxRAMModel" || class(model) == "MxModel" ){	
 	##OPENMX## 	STATISTICS <- rep(NA, n.subsets)
@@ -304,9 +304,9 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	##OPENMX## 	tmpcov <- cov(data)
 	##OPENMX## 	Data <- mxData(tmpcov, type="cov", numObs = nrow(data))
 	##OPENMX## 	basemodels[[LOOP+1]] <- mxRun(mxModel(mxMod, Data), silent = TRUE)		
-	##OPENMX## 	LRstat <- RMR <- Cooksstat <- c()		
+	##OPENMX## 	LDstat <- RMR <- Cooksstat <- c()		
 	##OPENMX## 	for(i in 1:(length(basemodels)-1)){
-	##OPENMX## 		LRstat[i] <- basemodels[[i]]@output$Minus2LogLikelihood - 
+	##OPENMX## 		LDstat[i] <- basemodels[[i]]@output$Minus2LogLikelihood - 
 	##OPENMX## 			basemodels[[i]]@output$SaturatedLikelihood			
 	##OPENMX## 		theta <- basemodels[[i]]@output$estimate	
 	##OPENMX## 		hess <- basemodels[[i]]@output$estimatedHessian		
@@ -319,13 +319,13 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	##OPENMX## 	}		
 	##OPENMX## 	Cooksstat <- c(NA, Cooksstat)
 	##OPENMX## 	orderentered <- c(NA, orderentered)
-	##OPENMX## 	LRstat[i+1] <- basemodels[[i+1]]@output$Minus2LogLikelihood - 
+	##OPENMX## 	LDstat[i+1] <- basemodels[[i+1]]@output$Minus2LogLikelihood - 
 	##OPENMX## 			basemodels[[i+1]]@output$SaturatedLikelihood
 	##OPENMX## 	Chat <- basemodels[[i+1]]@objective@info$expCov	
 	##OPENMX## 	C <- basemodels[[i+1]]@data@observed			
 	##OPENMX## 	RMR[i+1] <- sqrt(2*sum(((C - Chat)^2) /
 	##OPENMX## 			(ncol(C)*(ncol(C) + 1))))	
-	##OPENMX## 	ret <- list(LR=LRstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)
+	##OPENMX## 	ret <- list(LD=LDstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)
 	##OPENMX## }
 	class(ret) <- 'forward.search'
 	ret
@@ -335,13 +335,13 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 #' @rdname forward.search
 #' @method print forward.search
 #' @param x an object of class \code{forward.search}
-#' @param stat type of statistic to use. Could be 'LR', 'RMR', or 'gCD' for 
-#' the likelihood ratio, root mean square residual, or generalized Cook's distances,  
+#' @param stat type of statistic to use. Could be 'X2', 'RMR', or 'gCD' for 
+#' the model chi squared value, root mean square residual, or generalized Cook's distance,  
 #' respectively
 #' @param ... additional parameters to be passed
-print.forward.search <- function(x, stat = 'LR', ...)
+print.forward.search <- function(x, stat = 'X2', ...)
 {
-	if(stat == 'LR') ret <- x$LR
+	if(stat == 'X2') ret <- x$LD
 	if(stat == 'RMR') ret <- x$RMR
 	if(stat == 'gCD') ret <- x$gCD
 	names(ret) <- x$ord
@@ -355,19 +355,17 @@ print.forward.search <- function(x, stat = 'LR', ...)
 #' @param main the main title of the plot
 #' @param type type of plot to use, default displays points and lines
 #' @param ylab the y label of the plot
-plot.forward.search <- function(x, y = NULL, stat = 'LR', main = 'Forward Search', 
+plot.forward.search <- function(x, y = NULL, stat = 'X2', main = 'Forward Search', 
 	type = c('p','h'), ylab = 'obs.resid', ...)
-{
+{    
 	id <- x$ord
 	Input <- 1:length(id)
-	if(stat == 'LR') stat2 <- x$LR
+	if(stat == 'X2') stat2 <- x$LD
 	if(stat == 'RMR') stat2 <- x$RMR
 	if(stat == 'gCD') stat2 <- x$gCD
 	dat <- data.frame(stat2,Input,id)	
-	ret <- xyplot(stat2~Input, dat, type=type, main=main, ylab=stat, 
+	ret <- lattice::xyplot(stat2~Input, dat, type=type, main=main, ylab=stat, 
 		xlab='Input Step', ...)
 	return(ret)
 }
-
-
 

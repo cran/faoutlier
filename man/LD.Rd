@@ -10,7 +10,7 @@
 
   \method{plot}{LD} (x, y = NULL,
     main = "Likelihood Distance", type = c("p", "h"),
-    ylab = "LD", ...)
+    ylab = "LD", absolute = FALSE, ...)
 }
 \arguments{
   \item{data}{matrix or data.frame}
@@ -21,7 +21,8 @@
   installed from github) then a confirmatory approach is
   performed instead}
 
-  \item{na.rm}{logical; remove cases with missing data?}
+  \item{na.rm}{logical; remove rows with missing data? Note
+  that this is required for EFA analysis}
 
   \item{digits}{number of digits to round in the final
   result}
@@ -41,6 +42,9 @@
   \item{main}{the main title of the plot}
 
   \item{ylab}{the y label of the plot}
+
+  \item{absolute}{logical; use absolute values instead of
+  deviations?}
 }
 \description{
   Compute likelihood distances between models when removing
@@ -107,6 +111,12 @@ plot(LDresult.outlier)
 }
 \author{
   Phil Chalmers \email{rphilip.chalmers@gmail.com}
+}
+\references{
+  Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old
+  and new ideas for data screening and assumption testing
+  for exploratory and confirmatory factor analysis.
+  \emph{Frontiers in Psychology, 3}, 1-21.
 }
 \seealso{
   \code{\link{gCD}}, \code{\link{obs.resid}},

@@ -1,6 +1,6 @@
 Package: faoutlier
-Version: 0.2.3
-Date: 2011-12-22
+Version: 0.3.0
+Date: 2012-07-22
 Type: Package
 Title: Influential case detection methods for factor analysis and SEM
 Author: Phil Chalmers <rphilip.chalmers@gmail.com>
@@ -17,5 +17,5 @@ License: GPL (>= 2)
 URL: https://github.com/philchalmers/faoutlier
 Collate: 'gCD.R' 'forward.search.R' 'LD.R' 'misc.R' 'obs.resid.R'
         'robustMD.R' 'faoutlier.R'
-Packaged: 2012-06-06 05:16:05 UTC; phil
-Date/Publication: 2012-06-06 05:40:51
+Packaged: 2012-07-23 04:39:05 UTC; phil
+Date/Publication: 2012-07-23 05:28:13
