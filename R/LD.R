@@ -10,8 +10,8 @@
 #' @aliases LD
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor analysis. If \code{class(model)} is a sem (or OpenMx model if installed 
-#' from github) then a confirmatory approach is performed instead
+#' exploratory factor analysis. If \code{class(model)} is a sem (semmod), lavaan (character), 
+#' then a confirmatory approach is performed instead
 #' @param na.rm logical; remove rows with missing data? Note that this is required for 
 #' EFA analysis
 #' @param digits number of digits to round in the final result
@@ -36,17 +36,18 @@
 #' plot(LDresult)
 #' plot(LDresult.outlier)
 #'
+#' #-------------------------------------------------------------------
 #' #Confirmatory with sem
 #' model <- specifyModel()
-#'	  F1 -> V1,    lam11
-#' 	  F1 -> V2,    lam21
-#' 	  F1 -> V3,    lam31
-#' 	  F2 -> V4,    lam41
-#' 	  F2 -> V5,    lam52
-#' 	  F2 -> V6,    lam62
-#' 	  F3 -> V7,    lam73
-#'	  F3 -> V8,    lam83
-#' 	  F3 -> V9,    lam93
+#'	  F1 -> Remndrs,    lam11
+#' 	  F1 -> SntComp,    lam21
+#' 	  F1 -> WrdMean,    lam31
+#' 	  F2 -> MissNum,    lam42
+#' 	  F2 -> MxdArit,    lam52
+#' 	  F2 -> OddWrds,    lam62
+#' 	  F3 -> Boots,      lam73
+#'	  F3 -> Gloves,     lam83
+#' 	  F3 -> Hatchts,    lam93
 #' 	  F1 <-> F1,   NA,     1
 #' 	  F2 <-> F2,   NA,     1
 #' 	  F3 <-> F3,   NA,     1
@@ -55,62 +56,47 @@
 #' (LDresult.outlier <- LD(holzinger.outlier, model))
 #' plot(LDresult)
 #' plot(LDresult.outlier)
-
-#' #Confirmatory using OpenMx (requires github version, see ?faoutlier)
-#' manifests <- colnames(holzinger)
-#' latents <- c("F1","F2","F3")
-#' #specify model, mxData not necessary but useful to check if mxRun works
-#' model <- mxModel("Three Factor",
-#'       type="RAM",
-#'       manifestVars = manifests,
-#'       latentVars = latents,
-#'       mxPath(from="F1", to=manifests[1:3]),
-#' 	     mxPath(from="F2", to=manifests[4:6]),
-#' 	     mxPath(from="F3", to=manifests[7:9]),
-#'       mxPath(from=manifests, arrows=2),
-#'       mxPath(from=latents, arrows=2,
-#'             free=FALSE, values=1.0),
-#'       mxData(cov(holzinger), type="cov", numObs=nrow(holzinger))
-#' 	  )			
-#' 	   
-#' (LDresult <- LD(holzinger, model))	  
-#' (LDresult.outlier <- LD(holzinger.outlier, model))
+#' 
+#' #-------------------------------------------------------------------
+#' #Confirmatory with lavaan
+#' model <- 'F1 =~  Remndrs + SntComp + WrdMean
+#' F2 =~ MissNum + MxdArit + OddWrds
+#' F3 =~ Boots + Gloves + Hatchts'
+#' 
+#' (LDresult <- LD(holzinger, model, orthogonal=TRUE))	  
+#' (LDresult.outlier <- LD(holzinger.outlier, model, orthogonal=TRUE))
 #' plot(LDresult)
 #' plot(LDresult.outlier)
+#' 
 #' }
-LD <- function(data, model, na.rm = TRUE, digits = 5)
+LD <- function(data, model, na.rm = TRUE, digits = 5, ...)
 {		
 	rownames(data) <- 1:nrow(data)
 	if(na.rm) data <- na.omit(data)
+	LR <- c()
 	if(is.numeric(model)){		
-		MLmod <- factanal(data,model)$STATISTIC
-		LR <- c()
+		MLmod <- factanal(data,model)$STATISTIC		
 		for(i in 1:nrow(data)){  
-			tmp <- factanal(data[-i, ],model)
+			tmp <- factanal(data[-i, ],model, ...)
 			LR[i] <- tmp$STATISTIC
 		}
 	}
 	if(class(model) == "semmod"){
-	    MLmod <- sem(model, data=data)
-	    LR <- c()
+	    MLmod <- sem::sem(model, data=data)
+        MLmod <- MLmod$criterion * MLmod$N	    
 	    for(i in 1:nrow(data)){  
-	        tmp <- sem(model, cov(data[-i, ]), nrow(data) - 1)            
+	        tmp <- sem::sem(model, cov(data[-i, ]), nrow(data) - 1, ...)            
 	        LR[i] <- tmp$criterion * (tmp$N - 1)
 	    }	    
 	}
-	##OPENMX## if(class(model) == "MxRAMModel" || class(model) == "MxModel" ){
-	##OPENMX## 	mxMod <- model		
-	##OPENMX## 	mxData <- mxData(cov(data), type="cov",	numObs = nrow(data))
-	##OPENMX## 	fullMod <- mxRun(mxModel(mxMod, mxData), silent = TRUE)
-	##OPENMX## 	MLmod <- fullMod@output$Minus2LogLikelihood - fullMod@output$SaturatedLikelihood 
-	##OPENMX## 	LR <- c()
-	##OPENMX## 	for(i in 1:nrow(data)){  
-	##OPENMX## 		tmpmxData <- mxData(cov(data[-i, ]), type="cov", 
-	##OPENMX## 			numObs = nrow(data)-1)
-	##OPENMX## 		tmpMod <- mxRun(mxModel(mxMod, tmpmxData), silent = TRUE)
-	##OPENMX## 		LR[i] <- tmpMod@output$Minus2LogLikelihood - tmpMod@output$SaturatedLikelihood
-	##OPENMX## 	}	
-	##OPENMX## }
+	if(class(model) == "character"){        
+        MLmod <- lavaan::sem(model, data=data, ...)
+        MLmod <- MLmod@Fit@test[[1]]$stat
+        for(i in 1:nrow(data)){  
+            tmp <- lavaan::sem(model, data[-i, ], ...)            
+            LR[i] <- tmp@Fit@test[[1]]$stat
+        }
+	}
 	deltaX2 <- LR - MLmod 	
 	deltaX2 <- round(deltaX2, digits)
 	names(deltaX2) <- rownames(data)

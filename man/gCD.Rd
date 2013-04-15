@@ -4,7 +4,7 @@
 \alias{print.gCD}
 \title{Generalized Cook's Distance}
 \usage{
-  gCD(data, model, na.rm = TRUE, digits = 5)
+  gCD(data, model, na.rm = TRUE, digits = 5, ...)
 
   \method{print}{gCD} (x, head = 0.05, DFBETAS = FALSE,
     ...)
@@ -18,9 +18,9 @@
 
   \item{model}{if a single numeric number declares number
   of factors to extract in exploratory factor analysis. If
-  \code{class(model)} is a sem (or OpenMx model if
-  installed from github) then a confirmatory approach is
-  performed instead}
+  \code{class(model)} is a sem (semmod), or lavaan
+  (character), then a confirmatory approach is performed
+  instead}
 
   \item{na.rm}{logical; remove rows with missing data? Note
   that this is required for EFA analysis}
@@ -71,17 +71,18 @@ nfact <- 3
 plot(gCDresult)
 plot(gCDresult.outlier)
 
+#-------------------------------------------------------------------
 #Confirmatory with sem
 model <- specifyModel()
-	  F1 -> V1,    lam11
-	  F1 -> V2,    lam21
-	  F1 -> V3,    lam31
-	  F2 -> V4,    lam41
-	  F2 -> V5,    lam52
-	  F2 -> V6,    lam62
-	  F3 -> V7,    lam73
-	  F3 -> V8,    lam83
-	  F3 -> V9,    lam93
+   F1 -> Remndrs,    lam11
+	  F1 -> SntComp,    lam21
+	  F1 -> WrdMean,    lam31
+	  F2 -> MissNum,    lam41
+	  F2 -> MxdArit,    lam52
+	  F2 -> OddWrds,    lam62
+	  F3 -> Boots,      lam73
+	  F3 -> Gloves,     lam83
+	  F3 -> Hatchts,    lam93
 	  F1 <-> F1,   NA,     1
 	  F2 <-> F2,   NA,     1
 	  F3 <-> F3,   NA,     1
@@ -91,27 +92,17 @@ model <- specifyModel()
 plot(gCDresult2)
 plot(gCDresult2.outlier)
 
-#Confirmatory using OpenMx (requires github version, see ?faoutlier)
-manifests <- colnames(holzinger)
-latents <- c("F1","F2","F3")
-#specify model, mxData not necessary but useful to check if mxRun works
-model <- mxModel("Three Factor",
-      type="RAM",
-      manifestVars = manifests,
-      latentVars = latents,
-      mxPath(from="F1", to=manifests[1:3]),
-	     mxPath(from="F2", to=manifests[4:6]),
-	     mxPath(from="F3", to=manifests[7:9]),
-      mxPath(from=manifests, arrows=2),
-      mxPath(from=latents, arrows=2,
-            free=FALSE, values=1.0),
-      mxData(cov(holzinger), type="cov", numObs=nrow(holzinger))
-	  )
+#-------------------------------------------------------------------
+#Confirmatory with lavaan
+model <- 'F1 =~  Remndrs + SntComp + WrdMean
+F2 =~ MissNum + MxdArit + OddWrds
+F3 =~ Boots + Gloves + Hatchts'
 
-(gCDresult2 <- gCD(holzinger, model))
-(gCDresult2.outlier <- gCD(holzinger.outlier, model))
+(gCDresult2 <- gCD(holzinger, model, orthogonal=TRUE))
+(gCDresult2.outlier <- gCD(holzinger.outlier, model, orthogonal=TRUE))
 plot(gCDresult2)
 plot(gCDresult2.outlier)
+
 }
 }
 \author{

@@ -1,15 +1,18 @@
 Package: faoutlier
-Version: 0.3.0
-Date: 2012-07-22
+Version: 0.3.1
+Date: 2013-04-15
 Type: Package
 Title: Influential case detection methods for factor analysis and SEM
-Author: Phil Chalmers <rphilip.chalmers@gmail.com>
+Authors@R: c( person("Phil", "Chalmers", email =
+        "rphilip.chalmers@gmail.com", role = c("aut", "cre")))
 Maintainer: Phil Chalmers <rphilip.chalmers@gmail.com>
 Description: Tools for detecting and summarize influential cases that
         can affect exploratory and confirmatory factor analysis models
         as well as structural equation models more generally.
 Depends: R (>= 2.14), sem
 Imports: lattice, MASS
+Suggests: lavaan
+ByteCompile: yes
 LazyLoad: yes
 LazyData: yes
 Repository: CRAN
@@ -17,5 +20,7 @@ License: GPL (>= 2)
 URL: https://github.com/philchalmers/faoutlier
 Collate: 'gCD.R' 'forward.search.R' 'LD.R' 'misc.R' 'obs.resid.R'
         'robustMD.R' 'faoutlier.R'
-Packaged: 2012-07-23 04:39:05 UTC; phil
-Date/Publication: 2012-07-23 05:28:13
+Packaged: 2013-04-16 00:38:22 UTC; phil
+Author: Phil Chalmers [aut, cre]
+NeedsCompilation: no
+Date/Publication: 2013-04-16 07:43:22
