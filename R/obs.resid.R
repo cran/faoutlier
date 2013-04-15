@@ -3,18 +3,14 @@
 #' Compute model predicted residuals for each variable using regression
 #' estimated factor scores. 
 #' 
-#' 
 #' @aliases obs.resid
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor analysis. If \code{class(model)} is a sem (semmod), or lavaan (character), 
-#' then a confirmatory approach is performed instead
-#' @param na.rm logical; remove rows with missing data? Note that this is required for 
-#' EFA analysis and \code{sem} fitted models
-#' @param digits number of digits to round in the final result
+#'   exploratory factor analysis. If \code{class(model)} is a sem (semmod), or lavaan (character), 
+#'   then a confirmatory approach is performed instead
 #' @author Phil Chalmers \email{rphilip.chalmers@@gmail.com}
 #' @seealso
-#' \code{\link{gCD}}, \code{\link{LD}}, \code{\link{robustMD}}
+#'   \code{\link{gCD}}, \code{\link{LD}}, \code{\link{robustMD}}
 #' @references
 #' Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data screening and assumption testing for 
 #' exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3}, 1-21. 
@@ -66,13 +62,14 @@
 #' plot(obs.resid2.outlier)
 #'
 #' }
-obs.resid <- function(data, model, na.rm = TRUE, digits = 5, ...)
+obs.resid <- function(data, model, ...)
 {	
 	ret <- list()
 	rownames(data) <- 1:nrow(data)
-	if(na.rm) data <- na.omit(data)	
 	N <- nrow(data)	
-	if(is.numeric(model)){		
+	if(any(is.na(data)))
+	    stop('All routines require complete datasets (no NA\'s)')
+	if(is.numeric(model)){
 		R <- cor(data)
 		mod <- factanal(data, model, rotation='none', scores = 'regression', ...)
 		scores <- mod$scores		
@@ -102,11 +99,10 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5, ...)
         ret$res <- e
         ret$std_res <- eji        
 	}
-	if(class(model) == "character"){            
-	    if(!require(lavaan)) require(lavaan)
+	if(class(model) == "character"){
         C <- cov(data)
 	    mod <- lavaan::sem(model, data=data, ...)
-        scores <- predict(mod)
+        scores <- lavaan::predict(mod)
         ret$fascores <- scores       
         Lambda <- mod@Model@GLIST$lambda
         Theta <- mod@Model@GLIST$theta
@@ -123,14 +119,13 @@ obs.resid <- function(data, model, na.rm = TRUE, digits = 5, ...)
 	ret
 }
 
-#' @S3method print obs.resid
 #' @rdname obs.resid
-#' @method print obs.resid
 #' @param x an object of class \code{obs.resid}
 #' @param restype type of residual used, either \code{'obs'} for observation value  
-#' (inner product), \code{'res'} or \code{'std_res'} for unstandardized and standardized 
-#' for each variable, respectively  
+#'   (inner product), \code{'res'} or \code{'std_res'} for unstandardized and standardized 
+#'   for each variable, respectively  
 #' @param ... additional parameters to be passed 
+#' @export
 print.obs.resid <- function(x, restype = 'obs', ...)
 {
     if(restype == 'res') return(print(x$res))
@@ -138,15 +133,14 @@ print.obs.resid <- function(x, restype = 'obs', ...)
 	stat <- c()    
 	for(i in 1:length(x$id))
 		stat[i] <- x$std_res[i, ] %*% x$std_res[i, ]
-    if(restype == 'obs') return(print(stat))
+    if(restype == 'obs') return(stat)
 }
 
-#' @S3method plot obs.resid
 #' @rdname obs.resid
-#' @method plot obs.resid
 #' @param y a \code{NULL} value ignored by the plotting function
 #' @param main the main title of the plot
 #' @param type type of plot to use, default displays points and lines
+#' @export
 plot.obs.resid <- function(x, y = NULL, main = 'Observed Residuals', 
 	type = c('p','h'), restype = 'obs', ...)
 {    

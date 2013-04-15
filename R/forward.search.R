@@ -3,7 +3,7 @@
 #' The forward search algorithm begins by selecting a homogeneous subset 
 #' of cases based on a maximum likelihood criteria and continues to add individual 
 #' cases at each iteration given an acceptance criteria. By default the function
-#' add cases that contribute most to the likelihood function and that have 
+#' will add cases that contribute most to the likelihood function and that have 
 #' the closest robust Mahalanobis distance, however model implied residuals 
 #' may be included as well.
 #'
@@ -11,33 +11,30 @@
 #' can apply to nearly any model being studied
 #' where detection of influential observations is important. 
 #' 
-#' 
 #' @aliases forward.search
 #' @param data matrix or data.frame 
 #' @param model if a single numeric number declares number of factors to extract in 
-#' exploratory factor analysis. If \code{class(model)} is a sem (semmod), or lavaan (character), 
-#' then a confirmatory approach is performed instead
+#'   exploratory factor analysis. If \code{class(model)} is a sem (semmod), or lavaan (character), 
+#'   then a confirmatory approach is performed instead
 #' @param criteria character strings indicating the forward search method
-#' Can contain \code{'LD'} for likelihood distance, \code{'mah'} for Mahalanobis
-#' distance, or \code{'res'} for model implied residuals 
+#'   Can contain \code{'LD'} for likelihood distance, \code{'mah'} for Mahalanobis
+#'   distance, or \code{'res'} for model implied residuals 
 #' @param n.subsets a scalar indicating how many samples to draw to find 
-#' a homogeneous starting base group
+#'   a homogeneous starting base group
 #' @param p.base proportion of sample size to use as the base group
-#' @param na.rm logical; remove rows with missing data? Note that this is required for 
-#' EFA analysis and \code{sem} fitted models
-#' @param digits number of digits to round in the final result
 #' @param print.messages logical; print how many iterations are remaining?
 #' @author Phil Chalmers \email{rphilip.chalmers@@gmail.com}
 #' @seealso
-#' \code{\link{gCD}}, \code{\link{LD}}, \code{\link{robustMD}}
+#'   \code{\link{gCD}}, \code{\link{LD}}, \code{\link{robustMD}}, \code{\link{setCluster}}
 #' @keywords forward.search
 #' @export forward.search
 #' @examples 
 #' 
 #' \dontrun{
-#' data(holzinger)
-#' data(holzinger.outlier)
 #'
+#' #run all internal gCD and LD functions using multiple cores
+#' setCluster()
+#' 
 #' #Exploratory
 #' nfact <- 3
 #' (FS <- forward.search(holzinger, nfact))
@@ -47,18 +44,19 @@
 #'
 #' #Confirmatory with sem
 #' model <- specifyModel()
-#'	  F1 -> V1,    lam11
-#' 	  F1 -> V2,    lam21
-#' 	  F1 -> V3,    lam31
-#' 	  F2 -> V4,    lam41
-#' 	  F2 -> V5,    lam52
-#' 	  F2 -> V6,    lam62
-#' 	  F3 -> V7,    lam73
-#'	  F3 -> V8,    lam83
-#' 	  F3 -> V9,    lam93
+#'	  F1 -> Remndrs,    lam11
+#' 	  F1 -> SntComp,    lam21
+#' 	  F1 -> WrdMean,    lam31
+#' 	  F2 -> MissNum,    lam41
+#' 	  F2 -> MxdArit,    lam52
+#' 	  F2 -> OddWrds,    lam62
+#' 	  F3 -> Boots,      lam73
+#'	  F3 -> Gloves,     lam83
+#' 	  F3 -> Hatchts,    lam93
 #' 	  F1 <-> F1,   NA,     1
 #' 	  F2 <-> F2,   NA,     1
 #' 	  F3 <-> F3,   NA,     1
+#' 
 #' 
 #' (FS <- forward.search(holzinger, model))	  
 #' (FS.outlier <- forward.search(holzinger.outlier, model))
@@ -78,9 +76,11 @@
 #'
 #' }
 forward.search <- function(data, model, criteria = c('LD', 'mah'), 
-	n.subsets = 1000, p.base= .4, na.rm = TRUE, digits = 5, print.messages = TRUE, ...)
+	n.subsets = 1000, p.base= .4, print.messages = TRUE, ...)
 {	    
-	if(na.rm) data <- na.omit(data)
+    if(any(is.na(data)))
+        stop('All routines require complete datasets (no NA\'s) so that the search
+             gives meaninful results.')
 	N <- nrow(data)
 	p <- ncol(data)
 	ID <- 1:N
@@ -88,11 +88,11 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	for(i in 1:n.subsets)
 		Samples[ ,i] <- sample(1:N, floor(p.base*N))	
 	if(is.numeric(model)){
-		STATISTICS <- rep(NA, n.subsets)
-		for(i in 1:n.subsets){
-			mod <- factanal(data[Samples[ ,i], ], model)
-			STATISTICS[i] <- mod$STATISTIC
-		}
+		STATISTICS <- myApply(matrix(1:n.subsets), 1, function(i, data, Samples, model){
+            ret <- try(factanal(data[Samples[ ,i], ], model)$STATISTIC, TRUE)
+            if(is(ret, 'try-error')) ret <- Inf
+		    return(ret)
+		}, data=data, Samples=Samples, model=model)
 		orgbaseID <- baseID <- Samples[ ,(min(STATISTICS) == STATISTICS)]
 		nbaseID <- setdiff(ID, baseID)
 		basedata <- data[baseID, ]
@@ -105,9 +105,12 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 			basemodels[[LOOP]]$R <- tmpcor
  			stat <- c()
 			RANK <- rep(0, length(nbaseID))
-			if(any(criteria == 'LD')){				
-				for(j in 1:length(nbaseID))
-					stat[j] <- mlfact(cor(rbind(basedata, data[nbaseID[j], ])), model)$value
+			if(any(criteria == 'LD')){	
+			    stat <- myApply(matrix(1:length(nbaseID)), 1, function(j, basedata, nbaseID, model){
+			        ret <- try(mlfact(cor(rbind(basedata, data[nbaseID[j], ])), model)$value, TRUE)
+			        if(is(ret, 'try-error')) ret <- Inf
+			        return(ret)
+			    }, basedata=basedata, nbaseID=nbaseID, model=model)
 				RANK <- RANK + rank(stat)
 			}
 			if(any(criteria == 'mah')){	
@@ -160,29 +163,33 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 			(ncol(Rhat)*(ncol(Rhat) + 1))))
 		ret <- list(LD=LDstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)		
 	}
-	if(class(model) == "semmod"){        
-	    STATISTICS <- rep(NA, n.subsets)
-	    sampleCov <- cov(data)	    
-	    for(i in 1:n.subsets){	        
-	        samplesemMod <- sem(model, cov(data[-i,]), N-1, ...)
-	        STATISTICS[i] <- samplesemMod$criterion * (samplesemMod$N - 1)
-	    }        
+	if(class(model) == "semmod"){
+	    sampleCov <- cov(data)
+	    STATISTICS <- myApply(matrix(1:n.subsets), 1, function(i, data, Samples, model){
+            tmpdat <- data[Samples[ ,i], ]
+	        samplesemMod <- try(sem::sem(model, cov(tmpdat), nrow(tmpdat), ...), TRUE)
+            if(is(samplesemMod, 'try-error')) return(Inf)
+            ret <- samplesemMod$criterion * (samplesemMod$N - 1)
+            return(ifelse(ret < 0, Inf, ret))
+	    }, data=data, Samples=Samples, model=model)
         orgbaseID <- baseID <- Samples[ ,(min(STATISTICS) == STATISTICS)]
 	    nbaseID <- setdiff(ID, baseID)
 	    basedata <- data[baseID, ]
+	    stat <- c()
 	    basemodels <- list()
 	    orderentered <- c()
 	    for (LOOP in 1:length(nbaseID)){	
 	        tmpcov <- cov(basedata)
-	        basemodels[[LOOP]] <- sem(model, tmpcov, nrow(basedata), ...)	    	
-	        stat <- c()
+	        basemodels[[LOOP]] <- sem(model, tmpcov, nrow(basedata), ...)
 	        RANK <- rep(0, length(nbaseID))		
 			if(any(criteria == 'LD')){	
-				for(j in 1:length(nbaseID)){
-					tmpcov <- cov(rbind(basedata, data[nbaseID[j], ]))					
-					tmpmod <- sem(model, tmpcov, nrow(basedata) + 1, ...)
-					stat[j] <- tmpmod$criterion * (tmpmod$N - 1)
-				}		
+                stat <- myApply(matrix(1:length(nbaseID)), 1, function(j, basedata, nbaseID, model){
+                    tmpcov <- cov(rbind(basedata, data[nbaseID[j], ]))    				
+                    tmpmod <- try(sem::sem(model, tmpcov, nrow(basedata) + 1, ...), TRUE)
+                    if(is(tmpmod, 'try-error')) return(Inf)
+                    ret <- tmpmod$criterion * (tmpmod$N - 1)
+                    return(ifelse(ret < 0, Inf, ret))
+                }, basedata=basedata, nbaseID=nbaseID, model=model)				
 				RANK <- RANK + rank(stat)
 			}
 			if(any(criteria == 'mah')){	
@@ -233,13 +240,14 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	    RMR[i+1] <- sqrt(2*sum(((C - Chat)^2) /	(ncol(C)*(ncol(C) + 1))))	
 	    ret <- list(LD=LDstat, RMR=RMR, gCD=Cooksstat, ord=orderentered)	    
 	}
-	if(class(model) == "character"){         
-	    if(!require(lavaan)) require(lavaan)        
-	    STATISTICS <- rep(NA, n.subsets)
-	    for(i in 1:n.subsets){	        
-	        samplesemMod <- lavaan::sem(model, data=data[-i,], ...)
-	        STATISTICS[i] <- samplesemMod@Fit@test[[1]]$stat
-	    }        
+	if(class(model) == "character"){
+	    STATISTICS <- myApply(matrix(1:n.subsets), 1, function(i, data, Samples, model){
+	        tmpdat <- data[Samples[ ,i], ]
+	        samplesemMod <- try(lavaan::sem(model, data=tmpdat, ...), TRUE)
+            if(is(samplesemMod, 'try-error')) return(Inf)
+            ret <- samplesemMod@Fit@test[[1]]$stat
+	        return(ifelse(is.na(ret), Inf, ret))
+	    }, data=data, Samples=Samples, model=model)
 	    orgbaseID <- baseID <- Samples[ ,(min(STATISTICS) == STATISTICS)]
 	    nbaseID <- setdiff(ID, baseID)
 	    basedata <- data[baseID, ]
@@ -250,10 +258,13 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	        stat <- c()
 	        RANK <- rep(0, length(nbaseID))		
 	        if(any(criteria == 'LD')){	
-	            for(j in 1:length(nbaseID)){
-	                tmpmod <- lavaan::sem(model, data=data, ...)
-	                stat[j] <- tmpmod@Fit@test[[1]]$stat
-	            }		
+	            stat <- myApply(matrix(1:length(nbaseID)), 1, function(j, basedata, nbaseID, model){
+	                tmpdat <- rbind(basedata, data[nbaseID[j], ])        			
+	                tmpmod <- try(lavaan::sem(model, data=tmpdat, ...), TRUE)
+	                if(is(tmpmod, 'try-error')) return(Inf)
+	                ret <- tmpmod@Fit@test[[1]]$stat
+	                return(ifelse(is.na(ret), Inf, ret))
+	            }, basedata=basedata, nbaseID=nbaseID, model=model)	
 	            RANK <- RANK + rank(stat)
 	        }
 	        if(any(criteria == 'mah')){	
@@ -287,7 +298,7 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	    for(i in 1:(length(basemodels)-1)){
 	        LDstat[i] <- basemodels[[i]]@Fit@test[[1]]$stat
 	        theta <- basemodels[[i]]@Fit@x
-	        vcov <- vcov(basemodels[[i]])
+	        vcov <- lavaan::vcov(basemodels[[i]])
 	        theta2 <- basemodels[[i+1]]@Fit@x
 	        Cooksstat[i] <- (theta-theta2) %*% vcov %*% (theta-theta2)			
 	        Chat <- basemodels[[i]]@Fit@Sigma.hat[[1]]
@@ -308,14 +319,13 @@ forward.search <- function(data, model, criteria = c('LD', 'mah'),
 	ret
 }
 
-#' @S3method print forward.search
 #' @rdname forward.search
-#' @method print forward.search
 #' @param x an object of class \code{forward.search}
 #' @param stat type of statistic to use. Could be 'X2', 'RMR', or 'gCD' for 
-#' the model chi squared value, root mean square residual, or generalized Cook's distance,  
-#' respectively
+#'   the model chi squared value, root mean square residual, or generalized Cook's distance,  
+#'   respectively
 #' @param ... additional parameters to be passed
+#' @export
 print.forward.search <- function(x, stat = 'X2', ...)
 {
 	if(stat == 'X2') ret <- x$LD
@@ -325,13 +335,12 @@ print.forward.search <- function(x, stat = 'X2', ...)
 	return(print(ret))
 }
 
-#' @S3method plot forward.search
 #' @rdname forward.search
-#' @method plot forward.search
 #' @param y a \code{null} value ignored by \code{plot}
 #' @param main the main title of the plot
 #' @param type type of plot to use, default displays points and lines
 #' @param ylab the y label of the plot
+#' @export
 plot.forward.search <- function(x, y = NULL, stat = 'X2', main = 'Forward Search', 
 	type = c('p','h'), ylab = 'obs.resid', ...)
 {    
