@@ -1,7 +1,8 @@
 #' Likelihood Distance
 #'
 #' Compute likelihood distances between models when removing the \eqn{i_{th}} case. If there are no
-#' missing data then the \code{\link{GOF}} will often provide equivalent results.
+#' missing data then the \code{\link{GOF}} will often provide equivalent results. If mirt is used,
+#' then the values will be associated with the unique response patterns instead.
 #'
 #' Note that \code{LD} is not limited to confirmatory factor analysis and
 #' can apply to nearly any model being studied
@@ -86,16 +87,16 @@ LD <- function(data, model, ...)
         Sigma <- res$loadings %*% t(res$loadings) + diag(res$uniquenesses)
         sum(dmvnorm(data, sigma=Sigma, log=TRUE))
     }
-    f_sem <- function(ind, data, model, objective, ...){
-        logLik(sem::sem(model, data=data[-ind, ], objective=objective, ...))
+    f_sem <- function(ind, data, model, ...){
+        logLik(sem::sem(model, data=data[-ind, ], ...))
     }
     f_lavaan <- function(ind, data, model, ...){
         lavaan::logLik(lavaan::sem(model, data=data[-ind, ], ...))
     }
-    f_mirt <- function(ind, data, model, large, ...){
+    f_mirt <- function(ind, data, model, large, sv, ...){
         large$Freq[[1L]][ind] <- large$Freq[[1L]][ind] - 1L
-        tmp <- mirt::mirt(data=data, model=model, verbose=FALSE, large=large, ...)
-        tmp@logLik
+        tmp <- mirt::mirt(data=data, model=model, verbose=FALSE, large=large, pars=sv, ...)
+        mirt::extract.mirt(tmp, 'logLik')
     }
 
 	rownames(data) <- 1:nrow(data)
@@ -106,11 +107,9 @@ LD <- function(data, model, ...)
 		MLmod <- f_numeric(nrow(data) + 1, data=data, model=model, ...)
 		LR <- myApply(index, MARGIN=1L, FUN=f_numeric, data=data, model=model, ...)
 	} else if(class(model) == "semmod"){
-	    stop('semmod objects under construction. Use GOF() for now instead') #TODO
-        objective <- if(any(is.na(data))) sem::objectiveFIML else sem::objectiveML
-	    MLmod <- sem::sem(model, data=data, objective=objective, ...)
-        MLmod <- logLik(MLmod) ## TODO, this doesn't resolve correctly
-	    LR <- myApply(index, MARGIN=1L, FUN=f_sem, data=data, model=model, objective=objective, ...)
+	    MLmod <- sem::sem(model, data=data, ...)
+        MLmod <- logLik(MLmod)
+	    LR <- myApply(index, MARGIN=1L, FUN=f_sem, data=data, model=model, ...)
 	} else if(class(model) == "character"){
         MLmod <- lavaan::sem(model, data=data, ...)
         MLmod <- lavaan::logLik(MLmod)
@@ -119,15 +118,16 @@ LD <- function(data, model, ...)
         large <- MLmod_full <- mirt::mirt(data=data, model=model, large = TRUE)
         index <- matrix(1L:length(large$Freq[[1L]]))
         MLmod_full <- mirt::mirt(data=data, model=model, verbose = FALSE, large=large, ...)
-        MLmod <- MLmod_full@logLik
-        LR <- myApply(index, MARGIN=1L, FUN=f_mirt, data=data, model=model, large=large, ...)
+        sv <- mirt::mod2values(MLmod_full)
+        MLmod <- mirt::extract.mirt(MLmod_full, 'logLik')
+        index <- matrix(1L:length(large$Freq[[1L]]))
+        LR <- myApply(index, MARGIN=1L, FUN=f_mirt, data=data, model=model, large=large, sv=sv, ...)
 	} else {
         stop('model class not supported')
     }
 	deltaX2 <- 2*(MLmod - LR)
-	if(class(model) == "mirt.model")
-	    deltaX2 <- mirt::expand.table(cbind(as.vector(deltaX2), large$Freq[[1L]]))
-	names(deltaX2) <- rownames(data)
+	if(class(model) != "mirt.model")
+	    names(deltaX2) <- rownames(data)
 	class(deltaX2) <- 'LD'
 	deltaX2
 }
