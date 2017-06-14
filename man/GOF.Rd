@@ -2,11 +2,11 @@
 % Please edit documentation in R/GOF.R
 \name{GOF}
 \alias{GOF}
-\alias{plot.GOF}
 \alias{print.GOF}
+\alias{plot.GOF}
 \title{Goodness of Fit Distance}
 \usage{
-GOF(data, model, M2 = TRUE, ...)
+GOF(data, model, M2 = TRUE, progress = FALSE, ...)
 
 \method{print}{GOF}(x, ncases = 10, digits = 5, ...)
 
@@ -24,6 +24,8 @@ then a confirmatory approach is performed instead. Finally, if the model is defi
 mirt package}
 
 \item{M2}{logical; use the M2 statistic for when using mirt objects instead of G2?}
+
+\item{progress}{logical; display the progress of the computations in the console?}
 
 \item{...}{additional parameters to be passed}
 
@@ -65,6 +67,9 @@ nfact <- 3
 (GOFresult.outlier <- GOF(holzinger.outlier, nfact))
 plot(GOFresult)
 plot(GOFresult.outlier)
+
+## include a progress bar
+GOFresult <- GOF(holzinger, nfact, progress = TRUE)
 
 #-------------------------------------------------------------------
 #Confirmatory with sem
@@ -109,9 +114,6 @@ plot(result)
 
 }
 }
-\author{
-Phil Chalmers \email{rphilip.chalmers@gmail.com}
-}
 \references{
 Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data screening and assumption testing for
 exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3}, 1-21.
@@ -120,5 +122,7 @@ exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3},
 \code{\link{gCD}}, \code{\link{LD}}, \code{\link{obs.resid}},
   \code{\link{robustMD}}, \code{\link{setCluster}}
 }
+\author{
+Phil Chalmers \email{rphilip.chalmers@gmail.com}
+}
 \keyword{cooks}
-

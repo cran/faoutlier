@@ -2,11 +2,11 @@
 % Please edit documentation in R/gCD.R
 \name{gCD}
 \alias{gCD}
-\alias{plot.gCD}
 \alias{print.gCD}
+\alias{plot.gCD}
 \title{Generalized Cook's Distance}
 \usage{
-gCD(data, model, ...)
+gCD(data, model, progress = FALSE, ...)
 
 \method{print}{gCD}(x, ncases = 10, DFBETAS = FALSE, ...)
 
@@ -20,6 +20,8 @@ gCD(data, model, ...)
 exploratory factor analysis (requires complete dataset, i.e., no missing).
 If \code{class(model)} is a sem (semmod), or lavaan (character),
 then a confirmatory approach is performed instead}
+
+\item{progress}{logical; display the progress of the computations in the console?}
 
 \item{...}{additional parameters to be passed}
 
@@ -60,6 +62,9 @@ nfact <- 3
 (gCDresult.outlier <- gCD(holzinger.outlier, nfact))
 plot(gCDresult)
 plot(gCDresult.outlier)
+
+## include a progress bar
+gCDresult <- gCD(holzinger, nfact, progress = TRUE)
 
 #-------------------------------------------------------------------
 #Confirmatory with sem
@@ -107,9 +112,6 @@ cbind(res, gCD=round(result$gCD, 3))
 
 }
 }
-\author{
-Phil Chalmers \email{rphilip.chalmers@gmail.com}
-}
 \references{
 Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data screening and assumption testing for
 exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3}, 1-21.
@@ -117,5 +119,7 @@ exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3},
 \seealso{
 \code{\link{LD}}, \code{\link{obs.resid}}, \code{\link{robustMD}}, \code{\link{setCluster}}
 }
+\author{
+Phil Chalmers \email{rphilip.chalmers@gmail.com}
+}
 \keyword{cooks}
-

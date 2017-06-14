@@ -2,11 +2,11 @@
 % Please edit documentation in R/LD.R
 \name{LD}
 \alias{LD}
-\alias{plot.LD}
 \alias{print.LD}
+\alias{plot.LD}
 \title{Likelihood Distance}
 \usage{
-LD(data, model, ...)
+LD(data, model, progress = FALSE, ...)
 
 \method{print}{LD}(x, ncases = 10, digits = 5, ...)
 
@@ -22,6 +22,8 @@ If \code{class(model)} is a sem (semmod), or lavaan (character),
 then a confirmatory approach is performed instead. Finally, if the model is defined with
 \code{mirt::mirt.model()} then distances will be computed for categorical data with the
 mirt package}
+
+\item{progress}{logical; display the progress of the computations in the console?}
 
 \item{...}{additional parameters to be passed}
 
@@ -65,6 +67,9 @@ nfact <- 3
 plot(LDresult)
 plot(LDresult.outlier)
 
+## add a progress meter
+LDresult <- LD(holzinger, nfact, progress = TRUE)
+
 #-------------------------------------------------------------------
 #Confirmatory with sem
 model <- sem::specifyModel()
@@ -107,9 +112,6 @@ plot(LDresult)
 
 }
 }
-\author{
-Phil Chalmers \email{rphilip.chalmers@gmail.com}
-}
 \references{
 Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data screening and assumption testing for
 exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3}, 1-21.
@@ -118,5 +120,7 @@ exploratory and confirmatory factor analysis. \emph{Frontiers in Psychology, 3},
 \code{\link{gCD}}, \code{\link{GOF}}, \code{\link{obs.resid}},
   \code{\link{robustMD}}, \code{\link{setCluster}}
 }
+\author{
+Phil Chalmers \email{rphilip.chalmers@gmail.com}
+}
 \keyword{cooks}
-

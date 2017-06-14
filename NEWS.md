@@ -1,3 +1,7 @@
+Changes in version 0.7
+
+- added a `progress` argument to `gCD()`, `LD()`, and `GOF()` to print the progress of the iterations
+
 Changes in version 0.5
 
   - several orgainizational overahauls
