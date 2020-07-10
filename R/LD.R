@@ -23,12 +23,12 @@
 #'   \code{\link{robustMD}}, \code{\link{setCluster}}
 #' @references
 #'
-#' Chalmers, R. P. & Flora, D. B. (2015). faoutlier: An R Package for Detecting 
+#' Chalmers, R. P. & Flora, D. B. (2015). faoutlier: An R Package for Detecting
 #'   Influential Cases in Exploratory and Confirmatory Factor Analysis.
 #'   \emph{Applied Psychological Measurement, 39}, 573-574. \doi{10.1177/0146621615597894}
 #'
-#' Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data 
-#' screening and assumption testing for exploratory and confirmatory factor analysis. 
+#' Flora, D. B., LaBrish, C. & Chalmers, R. P. (2012). Old and new ideas for data
+#' screening and assumption testing for exploratory and confirmatory factor analysis.
 #'  \emph{Frontiers in Psychology, 3}, 1-21. \doi{10.3389/fpsyg.2012.00055}
 #' @keywords cooks
 #' @export LD
@@ -90,7 +90,7 @@
 #' plot(LDresult)
 #'
 #' }
-LD <- function(data, model, progress = FALSE, ...)
+LD <- function(data, model, progress = TRUE, ...)
 {
     f_numeric <- function(ind, data, model, ...){
         res <- factanal(data[-ind, ], model, ...)
@@ -128,7 +128,7 @@ LD <- function(data, model, progress = FALSE, ...)
         LR <- myApply(index, MARGIN=1L, FUN=f_lavaan, progress=progress,
                       data=data, model=model, ...)
 	} else if(class(model) == "mirt.model"){
-        large <- MLmod_full <- mirt::mirt(data=data, model=model, large = TRUE)
+        large <- MLmod_full <- mirt::mirt(data=data, model=model, large = 'return')
         index <- matrix(1L:length(large$Freq[[1L]]))
         MLmod_full <- mirt::mirt(data=data, model=model, verbose = FALSE, large=large, ...)
         sv <- mirt::mod2values(MLmod_full)
