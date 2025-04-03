@@ -1,5 +1,5 @@
 Package: faoutlier
-Version: 0.7.6
+Version: 0.7.7
 Type: Package
 Title: Influential Case Detection Methods for Factor Analysis and
         Structural Equation Models
@@ -17,11 +17,12 @@ Imports: methods, lattice, lavaan, mirt (>= 1.32.1), MASS, pbapply (>=
 ByteCompile: yes
 LazyLoad: yes
 LazyData: yes
+Encoding: UTF-8
 Repository: CRAN
 License: GPL (>= 2)
 URL: https://github.com/philchalmers/faoutlier
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2021-01-10 04:04:31 UTC; phil
+Packaged: 2025-04-03 01:24:06 UTC; phil
 Author: Phil Chalmers [aut, cre]
-Date/Publication: 2021-01-10 15:50:05 UTC
+Date/Publication: 2025-04-03 02:40:14 UTC
